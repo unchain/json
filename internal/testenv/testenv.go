@@ -13,7 +13,6 @@ package testenv
 import (
 	"errors"
 	"flag"
-	"internal/cfg"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,6 +21,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/e-nikolov/json/internal/cfg"
 )
 
 // Builder reports the name of the builder running this test
