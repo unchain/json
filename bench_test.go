@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"internal/testenv"
 	"io"
 	"os"
 	"reflect"
@@ -22,6 +21,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/unchain/json/internal/testenv"
 )
 
 type codeResponse struct {

@@ -1078,6 +1078,60 @@ func TestMarshalEmbeds(t *testing.T) {
 	}
 }
 
+type TopInline struct {
+	Level0  int
+	Embed0  Embed0   `json:",inline"`
+	Embed0a *Embed0a `json:",inline"`
+	Embed0b *Embed0b `json:"e,inline,omitempty"` // treated as named
+	Embed0c Embed0c  `json:"-"`                  // ignored
+	Loop    Loop     `json:",inline"`
+	Embed0p Embed0p  `json:",inline"` // has Point with X, Y, used
+	Embed0q Embed0q  `json:",inline"` // has Point with Z, used
+	embed   embed    `json:",inline"` // contains exported field
+}
+
+func TestMarshalInlines(t *testing.T) {
+	top := &TopInline{
+		Level0: 1,
+		Embed0: Embed0{
+			Level1b: 2,
+			Level1c: 3,
+		},
+		Embed0a: &Embed0a{
+			Level1a: 5,
+			Level1b: 6,
+		},
+		Embed0b: &Embed0b{
+			Level1a: 8,
+			Level1b: 9,
+			Level1c: 10,
+			Level1d: 11,
+			Level1e: 12,
+		},
+		Loop: Loop{
+			Loop1: 13,
+			Loop2: 14,
+		},
+		Embed0p: Embed0p{
+			Point: image.Point{X: 15, Y: 16},
+		},
+		Embed0q: Embed0q{
+			Point: Point{Z: 17},
+		},
+		embed: embed{
+			Q: 18,
+		},
+	}
+	b, err := Marshal(top)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "{\"Level0\":1,\"Level1b\":2,\"Level1c\":3,\"Level1a\":5,\"LEVEL1B\":6,\"e\":{\"Level1a\":8,\"Level1b\":9,\"Level1c\":10,\"Level1d\":11,\"x\":12},\"Loop1\":13,\"Loop2\":14,\"X\":15,\"Y\":16,\"Z\":17,\"Q\":18}"
+	if string(b) != want {
+		t.Errorf("Wrong marshal result.\n got: %q\nwant: %q", b, want)
+	}
+}
+
 func equalError(a, b error) bool {
 	if a == nil {
 		return b == nil

@@ -1184,6 +1184,7 @@ type field struct {
 	index     []int
 	typ       reflect.Type
 	omitEmpty bool
+	inline    bool
 	quoted    bool
 
 	encoder encoderFunc
@@ -1241,7 +1242,15 @@ func typeFields(t reflect.Type) structFields {
 			// Scan f.typ for fields to include.
 			for i := 0; i < f.typ.NumField(); i++ {
 				sf := f.typ.Field(i)
-				if sf.Anonymous {
+				tag := sf.Tag.Get("json")
+				if tag == "-" {
+					continue
+				}
+				name, opts := parseTag(tag)
+				if !isValidTag(name) {
+					name = ""
+				}
+				if sf.Anonymous || opts.Contains("inline") {
 					t := sf.Type
 					if t.Kind() == reflect.Ptr {
 						t = t.Elem()
@@ -1255,14 +1264,6 @@ func typeFields(t reflect.Type) structFields {
 				} else if !sf.IsExported() {
 					// Ignore unexported non-embedded fields.
 					continue
-				}
-				tag := sf.Tag.Get("json")
-				if tag == "-" {
-					continue
-				}
-				name, opts := parseTag(tag)
-				if !isValidTag(name) {
-					name = ""
 				}
 				index := make([]int, len(f.index)+1)
 				copy(index, f.index)
@@ -1288,7 +1289,7 @@ func typeFields(t reflect.Type) structFields {
 				}
 
 				// Record found field and index sequence.
-				if name != "" || !sf.Anonymous || ft.Kind() != reflect.Struct {
+				if name != "" || !(sf.Anonymous || opts.Contains("inline")) || ft.Kind() != reflect.Struct {
 					tagged := name != ""
 					if name == "" {
 						name = sf.Name
@@ -1299,6 +1300,7 @@ func typeFields(t reflect.Type) structFields {
 						index:     index,
 						typ:       ft,
 						omitEmpty: opts.Contains("omitempty"),
+						inline:    opts.Contains("inline"),
 						quoted:    quoted,
 					}
 					field.nameBytes = []byte(field.name)
